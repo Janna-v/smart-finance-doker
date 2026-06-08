@@ -3,9 +3,7 @@ CREATE TABLE IF NOT EXISTS transazioni (
     data DATE NOT NULL,
     descrizione VARCHAR(255) NOT NULL,
     importo DECIMAL(10, 2) NOT NULL,
-    categoria VARCHAR(100)
+    categoria VARCHAR(100),
+    tipo VARCHAR(20) DEFAULT 'Uscita'
 );
 
-
-INSERT INTO transazioni (data, descrizione, importo, categoria) 
-VALUES ('2026-06-05', 'Caffè di prova', 1.50, 'Svago');

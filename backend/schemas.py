@@ -1,11 +1,12 @@
 from typing import Optional
-
 from pydantic import BaseModel
 from datetime import date
 from enum import Enum
 
+class TipoEnum(str, Enum):
+    ENTRATA = "Entrata"
+    USCITA = "Uscita"
 
-# Definiamo le categorie permesse
 class CategoriaEnum(str, Enum):
     CIBO = "Cibo"
     SVAGO = "Svago"
@@ -18,9 +19,11 @@ class Transazione(BaseModel):
     descrizione: str
     importo: float
     categoria: CategoriaEnum  
+    tipo: TipoEnum # 
 
 class TransazioneUpdate(BaseModel):
     data: Optional[date] = None
     descrizione: Optional[str] = None
     importo: Optional[float] = None
     categoria: Optional[CategoriaEnum] = None
+    tipo: Optional[TipoEnum] = None 
