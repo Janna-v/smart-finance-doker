@@ -1,0 +1,10 @@
+body { font-family: 'Segoe UI', sans-serif; background-color: #f4f7f6; padding: 20px; }
+h1 { color: #333; }
+ul { list-style: none; padding: 0; }
+li { 
+  background: white; margin: 10px 0; padding: 15px; 
+  border-radius: 8px; display: flex; justify-content: space-between;
+  box-shadow: 0 2px 5px rgba(0,0,0,0.1); 
+}
+button { margin-left: 5px; cursor: pointer; border: none; background: #eee; padding: 5px 10px; border-radius: 4px; }
+button:hover { background: #ddd; }
