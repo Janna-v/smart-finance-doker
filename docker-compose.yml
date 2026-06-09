@@ -8,8 +8,13 @@ services:
       MYSQL_ROOT_PASSWORD: ${DB_PASSWORD}
     ports:
       - "3307:3306"
-    volumes:
-      - ./db:/docker-entrypoint-initdb.d
+    volumes: # Named volume for MySQL data persistence
+      - mysql_data:/var/lib/mysql
+      - ./db:/docker-entrypoint-initdb.d # For init.sql script
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "root", "-p$${DB_PASSWORD}"]
+      timeout: 5s
+      retries: 5
 
   backend:
     build:
@@ -17,6 +22,11 @@ services:
       dockerfile: Dockerfile
     container_name: fastapi_backend
     restart: always
+    depends_on:
+      db:
+        condition: service_healthy
+    env_file:      
+      - .env
     ports:
       - "8000:8000"
     volumes:
@@ -27,7 +37,7 @@ services:
       DB_PASSWORD: ${DB_PASSWORD}
       DB_NAME: ${DB_NAME}
       DB_PORT: 3306
-    # MODIFICA QUESTA PARTE:
-    command: >
-      sh -c "while ! nc -z db 3306; do sleep 1; done;
-             uvicorn main:app --host 0.0.0.0 --port 8000 --reload"
+    command: uvicorn main:app --host 0.0.0.0 --port 8000 --reload
+
+volumes:
+  mysql_data: # Define the named volume

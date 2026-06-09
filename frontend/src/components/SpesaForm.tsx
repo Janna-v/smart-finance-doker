@@ -1,43 +1,43 @@
 import React, { useState } from 'react';
 import axios from 'axios';
 
-type SpesaFormProps = { onSpesaAggiunta: () => void; };
+type ExpenseFormProps = { onExpenseAdded: () => void; };
 
-const SpesaForm: React.FC<SpesaFormProps> = ({ onSpesaAggiunta }) => {
-  const [descrizione, setDescrizione] = useState('');
-  const [importo, setImporto] = useState('');
-  const [categoria, setCategoria] = useState('Cibo');
-  const [tipo, setTipo] = useState('Uscita'); // Nuovo stato per il tipo!
+const ExpenseForm: React.FC<ExpenseFormProps> = ({ onExpenseAdded }) => {
+  const [description, setDescription] = useState('');
+  const [amount, setAmount] = useState('');
+  const [category, setCategory] = useState('Food');
+  const [type, setType] = useState('Expense'); 
 
   const submit = (e: React.FormEvent) => {
     e.preventDefault();
-    axios.post('http://127.0.0.1:8000/transazioni', {
-      data: new Date().toISOString().split('T')[0],
-      descrizione,
-      importo: parseFloat(importo) || 0,
-      categoria,
-      tipo, // Inviamo anche il tipo
+    axios.post('http://127.0.0.1:8000/transactions', {
+      date: new Date().toISOString().split('T')[0],
+      description,
+      amount: parseFloat(amount) || 0,
+      category,
+      type, 
     }).then(() => {
-      setDescrizione(''); setImporto(''); setCategoria('Cibo'); setTipo('Uscita');
-      onSpesaAggiunta();
+      setDescription(''); setAmount(''); setCategory('Food'); setType('Expense');
+      onExpenseAdded();
     });
   };
 
   return (
     <form onSubmit={submit} style={{ marginBottom: 20 }}>
-      <input placeholder="Descrizione" value={descrizione} onChange={e => setDescrizione(e.target.value)} />
-      <input placeholder="Importo" value={importo} onChange={e => setImporto(e.target.value)} />
-      <select value={categoria} onChange={e => setCategoria(e.target.value)}>
-        <option value="Cibo">Cibo</option><option value="Svago">Svago</option><option value="Casa">Casa</option>
+      <input placeholder="Description" value={description} onChange={e => setDescription(e.target.value)} />
+      <input placeholder="Amount" value={amount} onChange={e => setAmount(e.target.value)} />
+      <select value={category} onChange={e => setCategory(e.target.value)}>
+        <option value="Food">Food</option><option value="Leisure">Leisure</option><option value="Home">Home</option>
       </select>
-      {/* Menu a tendina per il tipo */}
-      <select value={tipo} onChange={e => setTipo(e.target.value)}>
-        <option value="Uscita">Uscita</option>
-        <option value="Entrata">Entrata</option>
+      {/* Dropdown for type */}
+      <select value={type} onChange={e => setType(e.target.value)}>
+        <option value="Expense">Expense</option>
+        <option value="Income">Income</option>
       </select>
-      <button type="submit">Aggiungi</button>
+      <button type="submit">Add</button>
     </form>
   );
 };
 
-export default SpesaForm;
+export default ExpenseForm;

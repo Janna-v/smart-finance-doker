@@ -1,49 +1,51 @@
 from fastapi import APIRouter, HTTPException, Depends
-from schemas import Transazione, TransazioneUpdate
+from schemas import Transaction, TransactionUpdate
 from database import get_db
 import mysql.connector
+from routers.auth import get_current_user  # 1. Importa la dipendenza per l'autenticazione
 
 router = APIRouter()
 
-@router.post("/transazioni")
-def add_transazione(t: Transazione, db: mysql.connector.MySQLConnection = Depends(get_db)):
+@router.post("/transactions")
+def add_transaction(t: Transaction, db: mysql.connector.MySQLConnection = Depends(get_db), user_id: int = Depends(get_current_user)):
     cursor = db.cursor()
-    sql = "INSERT INTO transazioni (data, descrizione, importo, categoria, tipo) VALUES (%s, %s, %s, %s, %s)"
-    cursor.execute(sql, (t.data, t.descrizione, t.importo, t.categoria.value, t.tipo.value))
+    # Aggiunto user_id nella query
+    sql = "INSERT INTO transactions (user_id, date, description, amount, category, type) VALUES (%s, %s, %s, %s, %s, %s)"
+    cursor.execute(sql, (user_id, t.date, t.description, t.amount, t.category.value, t.type.value))
     db.commit()
     cursor.close()
     return {"status": "ok"}
 
-@router.get("/transazioni")
-def get_transazioni(db: mysql.connector.MySQLConnection = Depends(get_db)):
+@router.get("/transactions")
+def get_transactions(db: mysql.connector.MySQLConnection = Depends(get_db), user_id: int = Depends(get_current_user)):
     cursor = db.cursor(dictionary=True)
-    cursor.execute("SELECT * FROM transazioni")
+    # Filtro per mostrare solo le transazioni dell'utente loggato
+    cursor.execute("SELECT * FROM transactions WHERE user_id = %s", (user_id,))
     result = cursor.fetchall()
     cursor.close()
     return result
 
-@router.put("/transazioni/{id_transazione}")
-def update_transazione(id_transazione: int, t: TransazioneUpdate, db: mysql.connector.MySQLConnection = Depends(get_db)):
+@router.put("/transactions/{transaction_id}")
+def update_transaction(transaction_id: int, t: TransactionUpdate, db: mysql.connector.MySQLConnection = Depends(get_db), user_id: int = Depends(get_current_user)):
     cursor = db.cursor(dictionary=True)
     
-   
     update_data = t.model_dump(exclude_unset=True)
     if not update_data:
-        raise HTTPException(status_code=400, detail="Nessun dato fornito per l'aggiornamento")
+        raise HTTPException(status_code=400, detail="No data provided for update")
 
-    
-    if "categoria" in update_data:
-        update_data["categoria"] = update_data["categoria"].value
+    if "category" in update_data:
+        update_data["category"] = update_data["category"].value
     if "tipo" in update_data:
         update_data["tipo"] = update_data["tipo"].value
 
-    sql = "UPDATE transazioni SET "
+    sql = "UPDATE transactions SET "
     fields = [f"{k} = %s" for k in update_data.keys()]
     sql += ", ".join(fields)
-    sql += " WHERE id = %s"
+    sql += " WHERE id = %s AND user_id = %s"  # Assicura che l'utente possa modificare solo la sua transazione
     
     values = list(update_data.values())
-    values.append(id_transazione)
+    values.append(transaction_id)
+    values.append(user_id)
     
     cursor.execute(sql, tuple(values))
     db.commit()
@@ -52,41 +54,45 @@ def update_transazione(id_transazione: int, t: TransazioneUpdate, db: mysql.conn
     cursor.close()
     
     if count == 0:
-        raise HTTPException(status_code=404, detail="Transazione non trovata")
+        raise HTTPException(status_code=404, detail="Transaction not found or not owned by user")
     return {"status": "updated"}
 
-@router.delete("/transazioni/{id_transazione}")
-def delete_transazione(id_transazione: int, db: mysql.connector.MySQLConnection = Depends(get_db)):
+@router.delete("/transactions/{transaction_id}")
+def delete_transaction(transaction_id: int, db: mysql.connector.MySQLConnection = Depends(get_db), user_id: int = Depends(get_current_user)):
     cursor = db.cursor()
-    cursor.execute("DELETE FROM transazioni WHERE id = %s", (id_transazione,))
+    # Elimina solo se appartiene all'utente loggato
+    cursor.execute("DELETE FROM transactions WHERE id = %s AND user_id = %s", (transaction_id, user_id))
     db.commit()
+    count = cursor.rowcount
     cursor.close()
+    
+    if count == 0:
+        raise HTTPException(status_code=404, detail="Transaction not found or not owned by user")
     return {"status": "deleted"}
 
 @router.get("/report")
-@router.get("/transazioni/summary")
-def get_transazioni_summary(db: mysql.connector.MySQLConnection = Depends(get_db)):
+@router.get("/transactions/summary")
+def get_transactions_summary(db: mysql.connector.MySQLConnection = Depends(get_db), user_id: int = Depends(get_current_user)):
     cursor = db.cursor(dictionary=True)
     
-   
-    cursor.execute("SELECT categoria, SUM(importo) as totale FROM transazioni GROUP BY categoria")
+    # Filtra i totali in base all'utente
+    cursor.execute("SELECT category, SUM(amount) as total FROM transactions WHERE user_id = %s GROUP BY category", (user_id,))
     category_totals = cursor.fetchall()
     
-    
-    cursor.execute("SELECT SUM(importo) as total_sum FROM transazioni")
+    cursor.execute("SELECT SUM(amount) as total_sum FROM transactions WHERE user_id = %s", (user_id,))
     total_sum_result = cursor.fetchone()
     total_sum = float(total_sum_result['total_sum']) if total_sum_result and total_sum_result['total_sum'] is not None else 0.0
     
     summary_data = []
     if total_sum > 0:
         for item in category_totals:
-            categoria = item['categoria']
-            totale = float(item['totale']) 
-            percentuale = (totale / total_sum) * 100
+            category = item['category']
+            total = float(item['total']) 
+            percentage = (total / total_sum) * 100
             summary_data.append({
-                "categoria": categoria,
-                "totale": totale,
-                "percentuale": f"{percentuale:.2f}%" 
+                "category": category,
+                "total": total,
+                "percentage": f"{percentage:.2f}%" 
             })
     
     cursor.close()
