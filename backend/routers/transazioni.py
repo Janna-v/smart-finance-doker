@@ -26,12 +26,12 @@ def get_transazioni(db: mysql.connector.MySQLConnection = Depends(get_db)):
 def update_transazione(id_transazione: int, t: TransazioneUpdate, db: mysql.connector.MySQLConnection = Depends(get_db)):
     cursor = db.cursor(dictionary=True)
     
-    # Costruiamo la query dinamicamente per aggiornare solo i campi forniti
+   
     update_data = t.model_dump(exclude_unset=True)
     if not update_data:
         raise HTTPException(status_code=400, detail="Nessun dato fornito per l'aggiornamento")
 
-    # Trasformiamo i valori enum in stringhe se presenti
+    
     if "categoria" in update_data:
         update_data["categoria"] = update_data["categoria"].value
     if "tipo" in update_data:
@@ -68,11 +68,11 @@ def delete_transazione(id_transazione: int, db: mysql.connector.MySQLConnection 
 def get_transazioni_summary(db: mysql.connector.MySQLConnection = Depends(get_db)):
     cursor = db.cursor(dictionary=True)
     
-    # Query per ottenere la somma dell'importo per categoria
+   
     cursor.execute("SELECT categoria, SUM(importo) as totale FROM transazioni GROUP BY categoria")
     category_totals = cursor.fetchall()
     
-    # Query per ottenere la somma totale dell'importo per il calcolo della percentuale
+    
     cursor.execute("SELECT SUM(importo) as total_sum FROM transazioni")
     total_sum_result = cursor.fetchone()
     total_sum = float(total_sum_result['total_sum']) if total_sum_result and total_sum_result['total_sum'] is not None else 0.0
@@ -81,7 +81,7 @@ def get_transazioni_summary(db: mysql.connector.MySQLConnection = Depends(get_db
     if total_sum > 0:
         for item in category_totals:
             categoria = item['categoria']
-            totale = float(item['totale']) # Assicurati che sia un float
+            totale = float(item['totale']) 
             percentuale = (totale / total_sum) * 100
             summary_data.append({
                 "categoria": categoria,

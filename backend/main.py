@@ -18,9 +18,9 @@ app.add_middleware(
 @app.on_event("startup")
 async def startup_event():
     db_gen = get_db()
-    db = next(db_gen)  # Ottiene la connessione dal generatore
+    db = next(db_gen)  
     init_db(db)
-    # La chiusura è gestita automaticamente dal generatore
+    
 
 app.include_router(transazioni_router)
 
