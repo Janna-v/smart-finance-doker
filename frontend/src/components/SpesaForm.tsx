@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import axios from 'axios';
+import API from '../api'; // Importa l'istanza API configurata
 
 type ExpenseFormProps = { onExpenseAdded: () => void; };
 
@@ -11,7 +11,7 @@ const ExpenseForm: React.FC<ExpenseFormProps> = ({ onExpenseAdded }) => {
 
   const submit = (e: React.FormEvent) => {
     e.preventDefault();
-    axios.post('http://127.0.0.1:8000/transactions', {
+    API.post('/transactions', { // Usa API.post invece di axios.post e un percorso relativo
       date: new Date().toISOString().split('T')[0],
       description,
       amount: parseFloat(amount) || 0,
