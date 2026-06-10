@@ -53,3 +53,7 @@ CREATE TABLE IF NOT EXISTS invoices (
     FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
     FOREIGN KEY (contact_id) REFERENCES contacts(id) ON DELETE SET NULL
 );
+
+INSERT INTO categories (user_id, name, type)
+VALUES (1, 'Food', 'Expense');
+SELECT * FROM categories;

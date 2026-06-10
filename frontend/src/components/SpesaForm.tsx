@@ -6,19 +6,20 @@ type ExpenseFormProps = { onExpenseAdded: () => void; };
 const ExpenseForm: React.FC<ExpenseFormProps> = ({ onExpenseAdded }) => {
   const [description, setDescription] = useState('');
   const [amount, setAmount] = useState('');
-  const [category, setCategory] = useState('Food');
+  const [categoryId, setCategoryId] = useState(1);
   const [type, setType] = useState('Expense'); 
 
   const submit = (e: React.FormEvent) => {
     e.preventDefault();
-    API.post('/transactions', { // Usa API.post invece di axios.post e un percorso relativo
-      date: new Date().toISOString().split('T')[0],
-      description,
-      amount: parseFloat(amount) || 0,
-      category,
-      type, 
-    }).then(() => {
-      setDescription(''); setAmount(''); setCategory('Food'); setType('Expense');
+   API.post('/transactions', {
+  date: new Date().toISOString().split('T')[0],
+  description,
+  amount: parseFloat(amount) || 0,
+  category_id: categoryId,
+  type,
+    })
+    .then(() => {
+      setDescription(''); setAmount(''); setCategoryId(1); setType('Expense');
       onExpenseAdded();
     });
   };
@@ -27,8 +28,10 @@ const ExpenseForm: React.FC<ExpenseFormProps> = ({ onExpenseAdded }) => {
     <form onSubmit={submit} style={{ marginBottom: 20 }}>
       <input placeholder="Description" value={description} onChange={e => setDescription(e.target.value)} />
       <input placeholder="Amount" value={amount} onChange={e => setAmount(e.target.value)} />
-      <select value={category} onChange={e => setCategory(e.target.value)}>
-        <option value="Food">Food</option><option value="Leisure">Leisure</option><option value="Home">Home</option>
+      <select value={categoryId} onChange={e => setCategoryId(1)}>
+       <option value="1">Food</option>
+<option value="2">Home</option>
+<option value="3">Leisure</option>
       </select>
       {/* Dropdown for type */}
       <select value={type} onChange={e => setType(e.target.value)}>

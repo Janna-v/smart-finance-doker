@@ -11,7 +11,7 @@ def add_transaction(t: Transaction, db: mysql.connector.MySQLConnection = Depend
     cursor = db.cursor()
     # Aggiunto user_id nella query
     sql = "INSERT INTO transactions (user_id, date, description, amount, category_id, type) VALUES (%s, %s, %s, %s, %s, %s)"
-    cursor.execute(sql, (user_id, t.date, t.description, t.amount, t.category_id.value, t.type.value))
+    cursor.execute(sql, (user_id, t.date, t.description, t.amount, t.category_id, t.type.value))
     db.commit()
     cursor.close()
     return {"status": "ok"}
@@ -68,31 +68,23 @@ def delete_transaction(transaction_id: int, db: mysql.connector.MySQLConnection 
     if count == 0:
         raise HTTPException(status_code=404, detail="Transaction not found or not owned by user")
     return {"status": "deleted"}
-
 @router.get("/report")
 @router.get("/transactions/summary")
-def get_transactions_summary(db: mysql.connector.MySQLConnection = Depends(get_db), user_id: int = Depends(get_current_user)):
+def get_transactions_summary(
+    db: mysql.connector.MySQLConnection = Depends(get_db),
+    user_id: int = Depends(get_current_user)
+):
     cursor = db.cursor(dictionary=True)
-    
-    # Filtra i totali in base all'utente
-    cursor.execute("SELECT category, SUM(amount) as total FROM transactions WHERE user_id = %s GROUP BY category", (user_id,))
-    category_totals = cursor.fetchall()
-    
-    cursor.execute("SELECT SUM(amount) as total_sum FROM transactions WHERE user_id = %s", (user_id,))
+
+    category_totals = []
+
+    cursor.execute(
+        "SELECT SUM(amount) as total_sum FROM transactions WHERE user_id = %s",
+        (user_id,)
+    )
+
     total_sum_result = cursor.fetchone()
     total_sum = float(total_sum_result['total_sum']) if total_sum_result and total_sum_result['total_sum'] is not None else 0.0
-    
-    summary_data = []
-    if total_sum > 0:
-        for item in category_totals:
-            category = item['category']
-            total = float(item['total']) 
-            percentage = (total / total_sum) * 100
-            summary_data.append({
-                "category": category,
-                "total": total,
-                "percentage": f"{percentage:.2f}%" 
-            })
-    
+
     cursor.close()
-    return summary_data
+    return []
