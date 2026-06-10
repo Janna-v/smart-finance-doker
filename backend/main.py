@@ -1,11 +1,13 @@
+from backend.models import transazioni
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 import os
 # Importiamo il router dal pacchetto locale
-from routers.transazioni import router as transazioni_router
+# from routers.transazioni import router as transazioni_router
 from routers.auth import router as auth_router
 from database import get_db
 from models.transazioni import init_db 
+from routers import categories
 
 app = FastAPI()
 
@@ -23,8 +25,9 @@ async def startup_event():
     init_db(db)
     
 
-app.include_router(transazioni_router)
+app.include_router(transazioni.router)
 app.include_router(auth_router, prefix="/auth", tags=["Authentication"])
+app.include_router(categories.router)
 
 @app.get("/")
 def read_root():

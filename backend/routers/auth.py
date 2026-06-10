@@ -62,7 +62,7 @@ def login(email: str, password: str, db: mysql.connector.MySQLConnection = Depen
 
     cursor.close()
     
-    # Generiamo il payload e il token JWT
+   
     payload = {
         "sub": str(user['id']), 
         "exp": datetime.utcnow() + timedelta(hours=8)

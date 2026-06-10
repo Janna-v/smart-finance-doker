@@ -10,8 +10,8 @@ router = APIRouter()
 def add_transaction(t: Transaction, db: mysql.connector.MySQLConnection = Depends(get_db), user_id: int = Depends(get_current_user)):
     cursor = db.cursor()
     # Aggiunto user_id nella query
-    sql = "INSERT INTO transactions (user_id, date, description, amount, category, type) VALUES (%s, %s, %s, %s, %s, %s)"
-    cursor.execute(sql, (user_id, t.date, t.description, t.amount, t.category.value, t.type.value))
+    sql = "INSERT INTO transactions (user_id, date, description, amount, category_id, type) VALUES (%s, %s, %s, %s, %s, %s)"
+    cursor.execute(sql, (user_id, t.date, t.description, t.amount, t.category_id.value, t.type.value))
     db.commit()
     cursor.close()
     return {"status": "ok"}
@@ -33,15 +33,14 @@ def update_transaction(transaction_id: int, t: TransactionUpdate, db: mysql.conn
     if not update_data:
         raise HTTPException(status_code=400, detail="No data provided for update")
 
-    if "category" in update_data:
-        update_data["category"] = update_data["category"].value
+   
     if "tipo" in update_data:
         update_data["tipo"] = update_data["tipo"].value
 
     sql = "UPDATE transactions SET "
     fields = [f"{k} = %s" for k in update_data.keys()]
     sql += ", ".join(fields)
-    sql += " WHERE id = %s AND user_id = %s"  # Assicura che l'utente possa modificare solo la sua transazione
+    sql += " WHERE id = %s AND user_id = %s"  
     
     values = list(update_data.values())
     values.append(transaction_id)
