@@ -4,7 +4,7 @@ import mysql.connector
 from mysql.connector import Error
 from schemas import UserCreate 
 from passlib.context import CryptContext
-from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
+from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials, OAuth2PasswordRequestForm
 import jwt
 import os
 from dotenv import load_dotenv
@@ -47,22 +47,21 @@ def register(user: UserCreate, db: mysql.connector.MySQLConnection = Depends(get
 
 
 @router.post("/token")
-def login(email: str, password: str, db: mysql.connector.MySQLConnection = Depends(get_db)):
+def login(form_data: OAuth2PasswordRequestForm = Depends(), db: mysql.connector.MySQLConnection = Depends(get_db)):
     cursor = db.cursor(dictionary=True)
-    cursor.execute("SELECT * FROM users WHERE email = %s", (email,))
+    cursor.execute("SELECT * FROM users WHERE email = %s", (form_data.username,))
     user = cursor.fetchone()
 
     if user is None:
         cursor.close()
         raise HTTPException(status_code=401, detail="Invalid credentials")
    
-    if not pwd_context.verify(password, user['password_hash']):
+    if not pwd_context.verify(form_data.password, user['password_hash']):
         cursor.close()
         raise HTTPException(status_code=401, detail="Invalid credentials")
 
     cursor.close()
     
-   
     payload = {
         "sub": str(user['id']), 
         "exp": datetime.utcnow() + timedelta(hours=8)
